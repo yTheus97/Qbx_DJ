@@ -1,7 +1,3 @@
-print("[DJ] ========================================")
-print("[DJ] Client.lua loading...")
-print("[DJ] ========================================")
-
 local isUiOpen = false
 local spawnedProps = {}
 local audioZones = {} -- Structure: audioZones[zoneId] = { djTable = entity, speakers = {entity1, entity2, ...}, effects = {entity1, entity2, ...} }
@@ -12,6 +8,7 @@ local selectedProp = nil
 local ghostProp = nil
 local ghostModel = nil
 local currentDJZone = nil -- Zone ID of the DJ table the player is currently using
+lib.locale()
 
 -- Music Beat State (MUST BE DEFINED EARLY!)
 local musicBeat = {
@@ -941,116 +938,112 @@ Citizen.CreateThread(function()
     
     -- Support for ox_target
     if GetResourceState('ox_target') == 'started' then
-        exports.ox_target:addModel(models, {
-            {
-                name = 'dj_open',
-                icon = 'fa-solid fa-music',
-                label = 'Open DJ Decks',
-                onSelect = function(data)
-                    local entity = data.entity
-                    local zoneId = Entity(entity).state.zoneId
-                    
-                    if zoneId then
-                        currentDJZone = zoneId
-                        SetNuiFocusKeepInput(false)
-                        SetNuiFocus(true, true)
-                        SendNUIMessage({ type = 'toggle', status = true, mode = 'dj' })
-                        isUiOpen = true
-                    end
-                end,
-                canInteract = function(entity)
-                    return GetEntityModel(entity) == GetHashKey('prop_dj_deck_01')
-                end
-            },
-            {
-                name = 'dj_remove',
-                icon = 'fa-solid fa-trash',
-                label = 'Remove Prop',
-                onSelect = function(data)
-                    TriggerServerEvent('dj:removeSpecificProp', NetworkGetNetworkIdFromEntity(data.entity))
-                end
-            },
-            {
-                name = 'effect_manage',
-                icon = 'fa-solid fa-layer-group',
-                label = 'Gerenciar Efeitos',
-                onSelect = function(data)
-                    local entity = data.entity
-                    local netId = NetworkGetNetworkIdFromEntity(entity)
-                    local currentEffects = Entity(entity).state.effectConfigs or {}
-                    
-                    print("[DJ] Opening effect manager for NetId:", netId)
-                    print("[DJ] Current effects:", json.encode(currentEffects))
-                    
-                    -- Open effect manager NUI
-                    SetNuiFocus(true, true)
-                    SendNUIMessage({
-                        type = 'openEffectManager',
-                        netId = netId,
-                        effectConfigs = currentEffects
-                    })
-                end,
-                canInteract = function(entity)
-                    local model = GetEntityModel(entity)
-                    
-                    -- NÃO MOSTRAR para mesa DJ
-                    if model == GetHashKey('prop_dj_deck_01') then
-                        return false
-                    end
-                    
-                    -- Mostrar apenas para props de efeito
-                    return IsEffectModel(model)
-                end
-            },
-            {
-                name = 'speaker_link',
-                icon = 'fa-solid fa-link',
-                label = 'Link to DJ Table',
-                onSelect = function(data)
-                    ShowSpeakerLinkMenu(data.entity)
-                end,
-                canInteract = function(entity)
-                    local model = GetEntityModel(entity)
-                    return IsSpeakerModel(model) and not Entity(entity).state.zoneId
-                end
-            },
-            {
-                name = 'speaker_unlink',
-                icon = 'fa-solid fa-unlink',
-                label = 'Unlink Speaker',
-                onSelect = function(data)
-                    TriggerServerEvent('dj:unlinkSpeaker', NetworkGetNetworkIdFromEntity(data.entity))
-                end,
-                canInteract = function(entity)
-                    local model = GetEntityModel(entity)
-                    return IsSpeakerModel(model) and Entity(entity).state.zoneId ~= nil
-                end
-            },
-            {
-                name = 'effect_link',
-                icon = 'fa-solid fa-link',
-                label = 'Link Effect to DJ Table',
-                onSelect = function(data)
-                    ShowEffectLinkMenu(data.entity)
-                end,
-                canInteract = function(entity)
-                    local model = GetEntityModel(entity)
-                    return IsEffectModel(model) and not Entity(entity).state.zoneId
-                end
-            },
-            {
-                name = 'effect_unlink',
-                icon = 'fa-solid fa-unlink',
-                label = 'Unlink Effect',
-                onSelect = function(data)
-                    TriggerServerEvent('dj:unlinkEffect', NetworkGetNetworkIdFromEntity(data.entity))
-                end,
-                canInteract = function(entity)
-                    local model = GetEntityModel(entity)
-                    return IsEffectModel(model) and Entity(entity).state.zoneId ~= nil
-                end
-            }
-        })
+exports.ox_target:addModel(models, {
+    {
+        name = 'dj_open',
+        icon = 'fa-solid fa-music',
+        label = locale('dj_open'),
+        onSelect = function(data)
+            local entity = data.entity
+            local zoneId = Entity(entity).state.zoneId
+
+            if zoneId then
+                currentDJZone = zoneId
+                SetNuiFocusKeepInput(false)
+                SetNuiFocus(true, true)
+                SendNUIMessage({ type = 'toggle', status = true, mode = 'dj' })
+                isUiOpen = true
+            end
+        end,
+        canInteract = function(entity)
+            return GetEntityModel(entity) == GetHashKey('prop_dj_deck_01')
+        end
+    },
+
+    {
+        name = 'dj_remove',
+        icon = 'fa-solid fa-trash',
+        label = locale('remove_prop'),
+        onSelect = function(data)
+            TriggerServerEvent('dj:removeSpecificProp', NetworkGetNetworkIdFromEntity(data.entity))
+        end
+    },
+
+    {
+        name = 'effect_manage',
+        icon = 'fa-solid fa-layer-group',
+        label = locale('manage_effects'),
+        onSelect = function(data)
+            local entity = data.entity
+            local netId = NetworkGetNetworkIdFromEntity(entity)
+            local currentEffects = Entity(entity).state.effectConfigs or {}
+
+            SetNuiFocus(true, true)
+            SendNUIMessage({
+                type = 'openEffectManager',
+                netId = netId,
+                effectConfigs = currentEffects
+            })
+        end,
+        canInteract = function(entity)
+            local model = GetEntityModel(entity)
+            if model == GetHashKey('prop_dj_deck_01') then return false end
+            return IsEffectModel(model)
+        end
+    },
+
+    {
+        name = 'speaker_link',
+        icon = 'fa-solid fa-link',
+        label = locale('link_speaker'),
+        onSelect = function(data)
+            ShowSpeakerLinkMenu(data.entity)
+        end,
+        canInteract = function(entity)
+            local model = GetEntityModel(entity)
+            return IsSpeakerModel(model) and not Entity(entity).state.zoneId
+        end
+    },
+
+    {
+        name = 'speaker_unlink',
+        icon = 'fa-solid fa-unlink',
+        label = locale('unlink_speaker'),
+        onSelect = function(data)
+            TriggerServerEvent('dj:unlinkSpeaker', NetworkGetNetworkIdFromEntity(data.entity))
+        end,
+        canInteract = function(entity)
+            local model = GetEntityModel(entity)
+            return IsSpeakerModel(model) and Entity(entity).state.zoneId ~= nil
+        end
+    },
+
+    {
+        name = 'effect_link',
+        icon = 'fa-solid fa-link',
+        label = locale('link_effect'),
+        onSelect = function(data)
+            ShowEffectLinkMenu(data.entity)
+        end,
+        canInteract = function(entity)
+            local model = GetEntityModel(entity)
+            return IsEffectModel(model) and not Entity(entity).state.zoneId
+        end
+    },
+
+    {
+        name = 'effect_unlink',
+        icon = 'fa-solid fa-unlink',
+        label = locale('unlink_effect'),
+        onSelect = function(data)
+            TriggerServerEvent('dj:unlinkEffect', NetworkGetNetworkIdFromEntity(data.entity))
+        end,
+        canInteract = function(entity)
+            local model = GetEntityModel(entity)
+            return IsEffectModel(model) and Entity(entity).state.zoneId ~= nil
+        end
+    }
+})
     -- Support for qb-target
     elseif GetResourceState('qb-target') == 'started' then
         exports['qb-target']:AddTargetModel(models, {
@@ -3221,5 +3214,3 @@ function HSVToRGB(h, s, v)
     
     return math.floor(r * 255), math.floor(g * 255), math.floor(b * 255)
 end
-
-
