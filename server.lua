@@ -1,11 +1,5 @@
 local Config = Config or {}
 
-if type(Config) ~= 'table' or not Config.UsePermissions then
-    Config = Config or {} 
-    Config.UsePermissions = false
-    Config.Job = 'dj' 
-end
-
 local function IsPlayerAllowed(source)
     if not Config.UsePermissions then
         return true
