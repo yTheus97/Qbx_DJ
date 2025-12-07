@@ -1,3 +1,4 @@
+lib.locale()
 local isUiOpen = false
 local spawnedProps = {}
 local audioZones = {} -- Structure: audioZones[zoneId] = { djTable = entity, speakers = {entity1, entity2, ...}, effects = {entity1, entity2, ...} }
@@ -8,7 +9,6 @@ local selectedProp = nil
 local ghostProp = nil
 local ghostModel = nil
 local currentDJZone = nil -- Zone ID of the DJ table the player is currently using
-lib.locale()
 
 -- Music Beat State (MUST BE DEFINED EARLY!)
 local musicBeat = {
